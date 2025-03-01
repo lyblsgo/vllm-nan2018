@@ -345,7 +345,7 @@ class Qwen2ForCausalLM(nn.Module, SupportsLoRA):
         else:
             self.lm_head = ParallelLMHead(config.vocab_size,
                                           config.hidden_size,
-                                          True,
+                                          getattr(config, "use_bias", False),
                                           quant_config=quant_config)
 
         self.logits_processor = LogitsProcessor(config.vocab_size)
@@ -371,9 +371,9 @@ class Qwen2ForCausalLM(nn.Module, SupportsLoRA):
         hidden_states: torch.Tensor,
         sampling_metadata: SamplingMetadata,
     ) -> Optional[torch.Tensor]:
+        bias = getattr(self.lm_head, "bias", None)
         logits = self.logits_processor(self.lm_head, hidden_states,
-                                       sampling_metadata,
-                                       self.lm_head.bias)
+                                       sampling_metadata, bias)
         return logits
 
     def make_empty_intermediate_tensors(
